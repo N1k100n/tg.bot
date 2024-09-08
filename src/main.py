@@ -19,7 +19,7 @@ bot = Bot(token = API_TOKEN)
 dp = Dispatcher(bot, run_tasks_by_default = True)
 
 # Подключаемся к бд
-connection = sqlite3.connect('my_database.db')
+connection = sqlite3.connect('db/database.db')
 cursor = connection.cursor()
 
 # Конфиг для календаря
@@ -120,8 +120,11 @@ for i in range(7):
 # Запуск бота (/start)
 @dp.message_handler(commands = ["start"])
 async def send_welcome(message: Message):
+  cursor.execute('SELECT * FROM Группы')
+  groups = cursor.fetchall()
+  for group in groups:
+    print(group)
   await message.answer("Укажите группу для просмотра расписания пар:")
-
 
 # Обработка колбеков
 @dp.callback_query_handler(lambda call: call.data.startswith("teacher_"))
