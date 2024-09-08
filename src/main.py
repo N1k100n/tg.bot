@@ -9,6 +9,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import Message, CallbackQuery, KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils import executor
 from aiogram_datepicker import Datepicker, DatepickerSettings
+import sqlite3
 
 # Устанавливаем токен бота
 API_TOKEN = "7501903523:AAFE9MIpzZ7sRY655iNrFoHZ27CXASCqya4"
@@ -16,6 +17,10 @@ API_TOKEN = "7501903523:AAFE9MIpzZ7sRY655iNrFoHZ27CXASCqya4"
 # Создаем объекты бота и диспетчера
 bot = Bot(token = API_TOKEN)
 dp = Dispatcher(bot, run_tasks_by_default = True)
+
+# Подключаемся к бд
+connection = sqlite3.connect('my_database.db')
+cursor = connection.cursor()
 
 # Конфиг для календаря
 def _get_datepicker_settings():
@@ -185,3 +190,7 @@ async def echo(message: Message):
 
 if __name__ == "__main__":
   executor.start_polling(dp, skip_updates = True)
+
+
+# Закрываем соединение с бд
+connection.close()
