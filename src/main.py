@@ -120,10 +120,6 @@ for i in range(7):
 # Запуск бота (/start)
 @dp.message_handler(commands = ["start"])
 async def send_welcome(message: Message):
-  cursor.execute('SELECT * FROM Группы')
-  groups = cursor.fetchall()
-  for group in groups:
-    print(group)
   await message.answer("Укажите группу для просмотра расписания пар:")
 
 # Обработка колбеков
@@ -184,7 +180,116 @@ async def echo(message: Message):
   global group_name
   datepicker = Datepicker(_get_datepicker_settings())
   markup = datepicker.start_calendar()
-  if False:
+
+
+  ########### Преподы
+
+  # SELECT Фамилия FROM Преподаватели
+  # WHERE id = (
+  #   SELECT Преподаватель_id FROM Пары
+  #   WHERE id = (
+  #     SELECT Пара_1_id FROM Расписание
+  #     WHERE id = (
+  #       SELECT Даты.Расписание_id FROM Даты
+  #       JOIN Группы ON
+  #       Даты.id = Группы.Дата_id AND
+  #       Группы.Группа = '910' AND
+  #       Даты.Дата = '2024-09-02'
+  #     )
+  #   )
+  # )
+
+  # SELECT Имя FROM Преподаватели
+  # WHERE id = (
+  #   SELECT Преподаватель_id FROM Пары
+  #   WHERE id = (
+  #     SELECT Пара_1_id FROM Расписание
+  #     WHERE id = (
+  #       SELECT Даты.Расписание_id FROM Даты
+  #       JOIN Группы ON
+  #       Даты.id = Группы.Дата_id AND
+  #       Группы.Группа = '910' AND
+  #       Даты.Дата = '2024-09-02'
+  #     )
+  #   )
+  # )
+
+  # SELECT Отчество FROM Преподаватели
+  # WHERE id = (
+  #   SELECT Преподаватель_id FROM Пары
+  #   WHERE id = (
+  #     SELECT Пара_1_id FROM Расписание
+  #     WHERE id = (
+  #       SELECT Даты.Расписание_id FROM Даты
+  #       JOIN Группы ON
+  #       Даты.id = Группы.Дата_id AND
+  #       Группы.Группа = '910' AND
+  #       Даты.Дата = '2024-09-02'
+  #     )
+  #   )
+  # )
+
+  ########### Дисциплины
+
+  # SELECT Дисциплина FROM Дисциплины
+  # WHERE id = (
+  #   SELECT Дисциплина_id FROM Пары
+  #   WHERE id = (
+  #     SELECT Пара_1_id FROM Расписание
+  #     WHERE id = (
+  #       SELECT Даты.Расписание_id FROM Даты
+  #       JOIN Группы ON
+  #       Даты.id = Группы.Дата_id AND
+  #       Группы.Группа = '910' AND
+  #       Даты.Дата = '2024-09-02'
+  #     )
+  #   )
+  # )
+
+  ########### Время
+
+  # SELECT Время_начала FROM Пары
+  # WHERE id = (
+  #   SELECT Пара_1_id FROM Расписание
+  #   WHERE id = (
+  #     SELECT Даты.Расписание_id FROM Даты
+  #     JOIN Группы ON
+  #     Даты.id = Группы.Дата_id AND
+  #     Группы.Группа = '910' AND
+  #     Даты.Дата = '2024-09-02'
+  #   )
+  # )
+
+  # SELECT Время_окончания FROM Пары
+  # WHERE id = (
+  #   SELECT Пара_1_id FROM Расписание
+  #   WHERE id = (
+  #     SELECT Даты.Расписание_id FROM Даты
+  #     JOIN Группы ON
+  #     Даты.id = Группы.Дата_id AND
+  #     Группы.Группа = '910' AND
+  #     Даты.Дата = '2024-09-02'
+  #   )
+  # )
+
+  ########### Аудитория
+
+  # SELECT Аудитория FROM Пары
+  # WHERE id = (
+  #   SELECT Пара_1_id FROM Расписание
+  #   WHERE id = (
+  #     SELECT Даты.Расписание_id FROM Даты
+  #     JOIN Группы ON
+  #     Даты.id = Группы.Дата_id AND
+  #     Группы.Группа = '910' AND
+  #     Даты.Дата = '2024-09-02'
+  #   )
+  # )
+
+  # Поиск группы в бд
+  cursor.execute(f'SELECT * FROM Группы WHERE Группа = \'{message.text}\'')
+  groups = cursor.fetchall()
+  if len(groups) == 0:
     await message.answer(f'Группа {message.text} не найдена (если в наименовании группы присутствуют буквы - используйте кириллицу, без пробелов)')
   else:
     group_name = message.text
