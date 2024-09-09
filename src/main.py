@@ -5,8 +5,8 @@ locale.setlocale (
   category = locale.LC_ALL,
   locale = "Russian"
 )
-from aiogram import Bot, Dispatcher, types
-from aiogram.types import Message, CallbackQuery, KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram import Bot, Dispatcher
+from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils import executor
 from aiogram_datepicker import Datepicker, DatepickerSettings
 import sqlite3
@@ -61,60 +61,11 @@ def _get_datepicker_settings():
 # Имя группы
 group_name = None
 
+# Дата расписания
+schedule_date = None
 
 # Создание разметки клавиатуры
 kb = InlineKeyboardMarkup(row_width=5)
-
-# Создание кнопок с цифрами от 1 до 6
-# number_buttons = [InlineKeyboardButton(text = str(i), callback_data = f'num_{i}') for i in range(1, 7)]
-
-# Создание кнопок
-time_buttons = [
-  InlineKeyboardButton(text = "Пара / Время", callback_data = "time_0"),
-  InlineKeyboardButton(text = "1. 08:00-09:40", callback_data = "time_1"),
-  InlineKeyboardButton(text = "2. 08:00-09:40", callback_data = "time_2"),
-  InlineKeyboardButton(text = "3. 08:00-09:40", callback_data = "time_3"),
-  InlineKeyboardButton(text = "4. 08:00-09:40", callback_data = "time_4"),
-  InlineKeyboardButton(text = "5. 08:00-09:40", callback_data = "time_5"),
-  InlineKeyboardButton(text = "6. 08:00-09:40", callback_data = "time_6"),
-]
-
-# Создание кнопок
-discipline_buttons = [
-  InlineKeyboardButton(text = "Дисциплина", callback_data = "discipline_0"),
-  InlineKeyboardButton(text = "Компьютерные сети", callback_data = "discipline_1"),
-  InlineKeyboardButton(text = "Английский", callback_data = "discipline_2"),
-  InlineKeyboardButton(text = " ", callback_data = "discipline_3"),
-  InlineKeyboardButton(text = "Биология", callback_data = "discipline_4"),
-  InlineKeyboardButton(text = "География", callback_data = "discipline_5"),
-  InlineKeyboardButton(text = " ", callback_data = "discipline_6"),
-]
-
-# Создание кнопок
-teacher_buttons = [
-  InlineKeyboardButton(text = "Преподаватель", callback_data = "teacher_0"),
-  InlineKeyboardButton(text = "Фамилия И.О.", callback_data = "teacher_1"),
-  InlineKeyboardButton(text = "Фамилия И.О.", callback_data = "teacher_2"),
-  InlineKeyboardButton(text = " ", callback_data = "teacher_3"),
-  InlineKeyboardButton(text = "Фамилия И.О.", callback_data = "teacher_4"),
-  InlineKeyboardButton(text = "Фамилия И.О.", callback_data = "teacher_5"),
-  InlineKeyboardButton(text = " ", callback_data = "teacher_6"),
-]
-
-# Создание кнопок
-cabinet_buttons = [
-  InlineKeyboardButton(text = "Аудитория", callback_data = "cabinet_0"),
-  InlineKeyboardButton(text = "303", callback_data = "cabinet_1"),
-  InlineKeyboardButton(text = "311/203", callback_data = "cabinet_2"),
-  InlineKeyboardButton(text = " ", callback_data = "cabinet_3"),
-  InlineKeyboardButton(text = "дис.", callback_data = "cabinet_4"),
-  InlineKeyboardButton(text = "дис.", callback_data = "cabinet_5"),
-  InlineKeyboardButton(text = " ", callback_data = "cabinet_6"),
-]
-
-# Объединение кнопок в разметку
-for i in range(7):
-  kb.add(time_buttons[i], discipline_buttons[i], teacher_buttons[i], cabinet_buttons[i])
 
 
 # Запуск бота (/start)
@@ -122,169 +73,124 @@ for i in range(7):
 async def send_welcome(message: Message):
   await message.answer("Укажите группу для просмотра расписания пар:")
 
-# Обработка колбеков
-@dp.callback_query_handler(lambda call: call.data.startswith("teacher_"))
-async def handle_teacher_button(call: types.CallbackQuery):
-  teacher_number = call.data.split('_')[1]
-  response_text = ""
-  if teacher_number == '1' and True:
-    response_text = "Фамилия Имя Отчество"
-  elif teacher_number == '2' and True:
-    response_text = "Фамилия Имя Отчество"
-  elif teacher_number == '3' and False:
-    response_text = ""
-  elif teacher_number == '4' and True:
-    response_text = "Фамилия Имя Отчество"
-  elif teacher_number == '5' and True:
-    response_text = "Фамилия Имя Отчество"
-  elif teacher_number == '6' and False:
-    response_text = ""
-  await call.answer(response_text)
-  await call.message.answer(response_text)
+
+# Получить кнопки времени
+def get_time_buttons():
+  global group_name
+  global schedule_date
+  time_buttons = [InlineKeyboardButton(text = "Пара / Время", callback_data = "time_0")]
+  for i in range(1, 7):
+    cursor.execute(f'SELECT Время_начала FROM Пары WHERE id = (SELECT Пара_{i}_id FROM Расписание WHERE id = (SELECT Даты.Расписание_id FROM Даты JOIN Группы ON Даты.id = Группы.Дата_id AND Группы.Группа = \'{group_name}\' AND Даты.Дата = \'{schedule_date}\'))')
+    start_time = cursor.fetchone()[0]
+    cursor.execute(f'SELECT Время_окончания FROM Пары WHERE id = (SELECT Пара_{i}_id FROM Расписание WHERE id = (SELECT Даты.Расписание_id FROM Даты JOIN Группы ON Даты.id = Группы.Дата_id AND Группы.Группа = \'{group_name}\' AND Даты.Дата = \'{schedule_date}\'))')
+    end_time = cursor.fetchone()[0]
+    time_buttons.append(InlineKeyboardButton(text = f'{i}. {start_time}-{end_time}', callback_data = f'time_{i}'))
+  return time_buttons
 
 
-# Обработка колбеков
-@dp.callback_query_handler(lambda call: call.data.startswith("discipline_"))
-async def handle_discipline_button(call: types.CallbackQuery):
-  discipline_number = call.data.split('_')[1]
-  response_text = ""
-  if discipline_number == '1' and True:
-    response_text = "ОП.11 Компьютерные сети"
-  elif discipline_number == '2' and True:
-    response_text = "ОУД.13 Английский"
-  elif discipline_number == '3' and False:
-    response_text = ""
-  elif discipline_number == '4' and True:
-    response_text = "ОУД.08 Биология"
-  elif discipline_number == '5' and True:
-    response_text = "ОУД.09 География"
-  elif discipline_number == '6' and False:
-    response_text = ""
-  await call.answer(response_text)
-  await call.message.answer(response_text)
+# Получить кнопки дисциплины
+def get_discipline_buttons():
+  global group_name
+  global schedule_date
+  discipline_buttons = [InlineKeyboardButton(text = "Дисциплина", callback_data = "discipline_0")]
+  for i in range(1, 7):
+    cursor.execute(f'SELECT Дисциплина FROM Дисциплины WHERE id = (SELECT Дисциплина_id FROM Пары WHERE id = (SELECT Пара_{i}_id FROM Расписание WHERE id = (SELECT Даты.Расписание_id FROM Даты JOIN Группы ON Даты.id = Группы.Дата_id AND Группы.Группа = \'{group_name}\' AND Даты.Дата = \'{schedule_date}\')))')
+    discipline = cursor.fetchone()
+    if discipline == None:
+      discipline_buttons.append(InlineKeyboardButton(text = " ", callback_data = f'discipline_0'))
+    else:
+      discipline_buttons.append(InlineKeyboardButton(text = discipline[0], callback_data = f'discipline_{i}'))
+  return discipline_buttons
 
 
+# Получить кнопки преподавателей
+def get_teacher_buttons():
+  global group_name
+  global schedule_date
+  teacher_buttons = [InlineKeyboardButton(text = "Преподаватели", callback_data = "teacher_0")]
+  for i in range(1, 7):
+    cursor.execute(f'SELECT Фамилия FROM Преподаватели WHERE id = (SELECT Преподаватель_id FROM Пары WHERE id = (SELECT Пара_{i}_id FROM Расписание WHERE id = (SELECT Даты.Расписание_id FROM Даты JOIN Группы ON Даты.id = Группы.Дата_id AND Группы.Группа = \'{group_name}\' AND Даты.Дата = \'{schedule_date}\')))')
+    teacher_surname = cursor.fetchone()
+    cursor.execute(f'SELECT Имя FROM Преподаватели WHERE id = (SELECT Преподаватель_id FROM Пары WHERE id = (SELECT Пара_{i}_id FROM Расписание WHERE id = (SELECT Даты.Расписание_id FROM Даты JOIN Группы ON Даты.id = Группы.Дата_id AND Группы.Группа = \'{group_name}\' AND Даты.Дата = \'{schedule_date}\')))')
+    teacher_name = cursor.fetchone()
+    cursor.execute(f'SELECT Отчество FROM Преподаватели WHERE id = (SELECT Преподаватель_id FROM Пары WHERE id = (SELECT Пара_{i}_id FROM Расписание WHERE id = (SELECT Даты.Расписание_id FROM Даты JOIN Группы ON Даты.id = Группы.Дата_id AND Группы.Группа = \'{group_name}\' AND Даты.Дата = \'{schedule_date}\')))')
+    teacher_lastname = cursor.fetchone()
+    if teacher_surname == None or teacher_name == None or teacher_lastname == None:
+      teacher_buttons.append(InlineKeyboardButton(text = " ", callback_data = f'teacher_0'))
+    else:
+      teacher_buttons.append(InlineKeyboardButton(text = f'{teacher_surname[0]} {teacher_name[0][0]}. {teacher_lastname[0][0]}.', callback_data = f'teacher_{i}'))
+  return teacher_buttons
+
+
+# Получить кнопки кабинетов
+def get_cabinet_buttons():
+  global group_name
+  global schedule_date
+  cabinet_buttons = [InlineKeyboardButton(text = "Аудитория", callback_data = "cabinet_0")]
+  for i in range(1, 7):
+    cursor.execute(f'SELECT Аудитория FROM Пары WHERE id = (SELECT Пара_{i}_id FROM Расписание WHERE id = (SELECT Даты.Расписание_id FROM Даты JOIN Группы ON Даты.id = Группы.Дата_id AND Группы.Группа = \'{group_name}\' AND Даты.Дата = \'{schedule_date}\'))')
+    cabinet = cursor.fetchone()[0]
+    if cabinet == None:
+      cabinet_buttons.append(InlineKeyboardButton(text = " ", callback_data = f'cabinet_0'))
+    else:
+      cabinet_buttons.append(InlineKeyboardButton(text = cabinet, callback_data = f'cabinet_{i}'))
+  return cabinet_buttons
+
+
+# Создание и объединение кнопок в разметку (расписание)
+def create_schedule():
+  global group_name
+  global schedule_date
+
+  # Создание разметки клавиатуры
+  kb = InlineKeyboardMarkup(row_width=5)
+
+  # Создание кнопок
+
+  # Время начала и окончания пар
+  time_buttons = get_time_buttons()
+
+  # Дисциплина
+  discipline_buttons = get_discipline_buttons()
+
+  # Преподаватели
+  teacher_buttons = get_teacher_buttons()
+
+  # Кабинеты
+  cabinet_buttons = get_cabinet_buttons()
+
+  # # Объединение кнопок в разметку
+  for i in range(7):
+    kb.add(time_buttons[i], discipline_buttons[i], teacher_buttons[i], cabinet_buttons[i])
+
+  return kb
+
+
+# Выбор даты
 @dp.callback_query_handler(Datepicker.datepicker_callback.filter())
 async def _process_datepicker(callback_query: CallbackQuery, callback_data: dict):
   global group_name
+  global schedule_date
   datepicker = Datepicker(_get_datepicker_settings())
   _date = await datepicker.process(callback_query, callback_data)
   if _date:
     if group_name != None:
-      await callback_query.message.answer(f'Расписание для группы {group_name} на {_date.strftime("%d.%m.%Y")}:', reply_markup=kb)
+      schedule_date = _date.strftime("%Y-%m-%d")
+      cursor.execute(f'SELECT Даты.id FROM Даты JOIN Группы ON Даты.id = Группы.Дата_id AND Группы.Группа = \'{group_name}\' AND Даты.Дата = \'{schedule_date}\'')
+      schedule = cursor.fetchall()
+      if len(schedule) == 0:
+        await callback_query.message.answer(f'Расписание для группы {group_name} на {schedule_date} не найдено')
+      else:
+        await callback_query.message.answer(f'Расписание для группы {group_name} на {schedule_date}:', reply_markup = create_schedule())
   await callback_query.answer()
 
 
+# Запуск дата-пикера
 @dp.message_handler()
 async def echo(message: Message):
   global group_name
   datepicker = Datepicker(_get_datepicker_settings())
   markup = datepicker.start_calendar()
-
-
-  ########### Преподы
-
-  # SELECT Фамилия FROM Преподаватели
-  # WHERE id = (
-  #   SELECT Преподаватель_id FROM Пары
-  #   WHERE id = (
-  #     SELECT Пара_1_id FROM Расписание
-  #     WHERE id = (
-  #       SELECT Даты.Расписание_id FROM Даты
-  #       JOIN Группы ON
-  #       Даты.id = Группы.Дата_id AND
-  #       Группы.Группа = '910' AND
-  #       Даты.Дата = '2024-09-02'
-  #     )
-  #   )
-  # )
-
-  # SELECT Имя FROM Преподаватели
-  # WHERE id = (
-  #   SELECT Преподаватель_id FROM Пары
-  #   WHERE id = (
-  #     SELECT Пара_1_id FROM Расписание
-  #     WHERE id = (
-  #       SELECT Даты.Расписание_id FROM Даты
-  #       JOIN Группы ON
-  #       Даты.id = Группы.Дата_id AND
-  #       Группы.Группа = '910' AND
-  #       Даты.Дата = '2024-09-02'
-  #     )
-  #   )
-  # )
-
-  # SELECT Отчество FROM Преподаватели
-  # WHERE id = (
-  #   SELECT Преподаватель_id FROM Пары
-  #   WHERE id = (
-  #     SELECT Пара_1_id FROM Расписание
-  #     WHERE id = (
-  #       SELECT Даты.Расписание_id FROM Даты
-  #       JOIN Группы ON
-  #       Даты.id = Группы.Дата_id AND
-  #       Группы.Группа = '910' AND
-  #       Даты.Дата = '2024-09-02'
-  #     )
-  #   )
-  # )
-
-  ########### Дисциплины
-
-  # SELECT Дисциплина FROM Дисциплины
-  # WHERE id = (
-  #   SELECT Дисциплина_id FROM Пары
-  #   WHERE id = (
-  #     SELECT Пара_1_id FROM Расписание
-  #     WHERE id = (
-  #       SELECT Даты.Расписание_id FROM Даты
-  #       JOIN Группы ON
-  #       Даты.id = Группы.Дата_id AND
-  #       Группы.Группа = '910' AND
-  #       Даты.Дата = '2024-09-02'
-  #     )
-  #   )
-  # )
-
-  ########### Время
-
-  # SELECT Время_начала FROM Пары
-  # WHERE id = (
-  #   SELECT Пара_1_id FROM Расписание
-  #   WHERE id = (
-  #     SELECT Даты.Расписание_id FROM Даты
-  #     JOIN Группы ON
-  #     Даты.id = Группы.Дата_id AND
-  #     Группы.Группа = '910' AND
-  #     Даты.Дата = '2024-09-02'
-  #   )
-  # )
-
-  # SELECT Время_окончания FROM Пары
-  # WHERE id = (
-  #   SELECT Пара_1_id FROM Расписание
-  #   WHERE id = (
-  #     SELECT Даты.Расписание_id FROM Даты
-  #     JOIN Группы ON
-  #     Даты.id = Группы.Дата_id AND
-  #     Группы.Группа = '910' AND
-  #     Даты.Дата = '2024-09-02'
-  #   )
-  # )
-
-  ########### Аудитория
-
-  # SELECT Аудитория FROM Пары
-  # WHERE id = (
-  #   SELECT Пара_1_id FROM Расписание
-  #   WHERE id = (
-  #     SELECT Даты.Расписание_id FROM Даты
-  #     JOIN Группы ON
-  #     Даты.id = Группы.Дата_id AND
-  #     Группы.Группа = '910' AND
-  #     Даты.Дата = '2024-09-02'
-  #   )
-  # )
 
   # Поиск группы в бд
   cursor.execute(f'SELECT * FROM Группы WHERE Группа = \'{message.text}\'')
